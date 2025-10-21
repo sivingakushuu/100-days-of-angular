@@ -1,6 +1,6 @@
 # Day 34: Template-driven Forms Trong Angular Part 2
 
-Như chúng ta đã tìm hiểu trong [Day 33][day33] thì forms là một thành phần khá quan trọng trong mỗi hệ thống cần thu thập thông tin của người dùng. Vậy trong trường hợp người dùng nhập các thông tin đó không chính xác thì sao? Chúng ta có cần kiểm tra tính đúng đắn của dữ liệu được nhập hay không? Câu trả lời cho vấn đề trên chính là việc validate data. Ví dụ, người tiếp viên ngân hàng khi nhận được form mở tài khoản của một người dùng, người tiếp viên đó sẽ phải kiểm tra những thông tin như tên, ngày tháng năm sinh có chính xác như thông tin được in trên hộ chiếu (hoặc các giấy tờ tương tự) hay không.
+Như chúng ta đã tìm hiểu trong [Day 33][day33] thì forms là một thành phần khá quan trọng trong mỗi hệ thống cần thu thập thông tin của người dùng. Vậy trong trường hợp người dùng nhập các thông tin đó không chính xác thì sao? Chúng ta có cần kiểm tra tính đúng đắn của dữ liệu được nhập hay không? Câu trả lời cho vấn đề trên chính là việc validate data. Ví dụ, người nhân viên ngân hàng khi nhận được form mở tài khoản của một người dùng, người tiếp viên đó sẽ phải kiểm tra những thông tin như tên, ngày tháng năm sinh có chính xác như thông tin được in trên hộ chiếu (hoặc các giấy tờ tương tự) hay không.
 
 Vậy đối với Template-driven Forms Trong Angular thì sao, nó có giúp ích gì cho chúng ta - những lập trình viên - có thể dễ dàng validate input data hay không?
 
@@ -219,6 +219,10 @@ Mục tiêu của ngày 35 sẽ là **Angular Forms: Reactive Forms**
 
 - https://github.com/tieppt/100-doc-angular/tree/day34
 - https://stackblitz.com/edit/100-days-of-angular-day-34?file=src%2Fapp%2Fsign-in%2Fsign-in.component.html
+
+## Youtube Video
+
+[![Day 34](https://img.youtube.com/vi/45VnmzfV_MI/0.jpg)](https://youtu.be/45VnmzfV_MI)
 
 ## References
 

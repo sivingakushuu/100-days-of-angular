@@ -59,22 +59,38 @@ Ví dụ: nếu chúng ta lựa chọn Angular hay React làm shell app, thì c�
 Trong demo này, chúng ta sẽ sử dụng Webpack 5, trong bản release mới nhất nó đã giới thiệu một advanced API là Module Federation. Điều này giúp chúng ta dễ dàng phát triển được Micro Frontend.
 Ngoài ra, chúng ta sẽ dùng Angular v11 (thời điểm này đang là RC) để tạo các app.
 
-Đầu tiên, chúng ta cần tạo một shell app bằng lệnh sau. (lưu ý, nếu Angular CLI đã support Webpack 5 thì không cần dùng `next` version, bạn chỉ cần dùng `latest` là được).
+Đầu tiên, chúng ta cần tạo một shell app bằng lệnh sau.
 ```sh
-npx @angular/cli@next new acme-email-client
+npx @angular/cli@14 new ngft-email-client --create-application=false
 ```
 
-Sau khi tạo xong project, chúng ta sẽ tạo thêm 2 application nữa: 1 cho mailbox, 1 cho calendar.
+Sau khi tạo xong project, chúng ta sẽ tạo thêm 3 applications nữa: 1 shell app, và 2 remote apps (mailbox, calendar).
 
-```sh
+Lưu ý: chúng ta dùng Router và scss cho cả 3 apps cho thống nhất.
+
+```
+npx ng generate application shell
+
+# ? Would you like to add Angular routing? Yes
+# ? Which stylesheet format would you like to use? SCSS
+
 npx ng generate application mailbox
 
+# ? Would you like to add Angular routing? Yes
+# ? Which stylesheet format would you like to use? SCSS
+
 npx ng generate application calendar
+
+# ? Would you like to add Angular routing? Yes
+# ? Which stylesheet format would you like to use? SCSS
+
 ```
 
-Do thời điểm hiện tại Angular CLI (v11 RC.1) mới chỉ opt-in support cho Webpack 5, nên chúng ta cần dùng Yarn và `resolutions` để có thể dùng được Webpack 5.
-
 Ngoài ra, chúng ta cần dùng đến custom webpack config nên chúng ta cần install thêm một package là `@angular-builders/custom-webpack`.
+
+```sh
+npm i -D @angular-builders/custom-webpack@14
+```
 
 File `package.json` của chúng ta sẽ có dạng như sau:
 
@@ -83,60 +99,107 @@ File `package.json` của chúng ta sẽ có dạng như sau:
 {
   "name": "acme-email-client",
   "scripts": {
-    "start:shell": "ng serve --project=acme-email-client --port 5200",
-    "start:mailbox": "ng serve --project=mailbox --port 5300",
-    "start:calendar": "ng serve --project=calendar --port 5400"
+    "start:shell": "ng serve --project=shell",
+    "start:mailbox": "ng serve --project=mailbox",
+    "start:calendar": "ng serve --project=calendar"
   },
   "dependencies": {
-      "./": "other deps"
+    "@angular/animations": "^14.2.0",
+    "@angular/common": "^14.2.0",
+    "@angular/compiler": "^14.2.0",
+    "@angular/core": "^14.2.0",
+    "@angular/forms": "^14.2.0",
+    "@angular/platform-browser": "^14.2.0",
+    "@angular/platform-browser-dynamic": "^14.2.0",
+    "@angular/router": "^14.2.0",
+    "rxjs": "~7.5.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.11.4"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "~0.1100.0-rc.1",
-    "@angular/cli": "~11.0.0-rc.1",
-    "@angular/compiler-cli": "~11.0.0-rc.1",
-    "@angular-builders/custom-webpack": "~10.0.1"
-  },
-  "resolutions": {
-    "webpack": "~5.3.0",
-    "@angular-devkit/build-angular": "~0.1100.0-rc.1"
+    "@angular-builders/custom-webpack": "^14.0.1",
+    "@angular-devkit/build-angular": "^14.2.3",
+    "@angular/cli": "~14.2.3",
+    "@angular/compiler-cli": "^14.2.0",
+    "typescript": "~4.7.2"
   }
 }
 ```
-Sau đó chúng ta cần xóa bỏ `node_modules` và chạy lại `yarn install` để cài đặt các packages.
 
-Ngoài ra để đảm bảo rằng project sẽ sử dụng yarn khi cài đặt các package thông qua lệnh `ng add` thì chúng ta có thể chạy lệnh sau:
+Chúng ta sẽ cài đặt các port để chạy `ng serve` cho từng ứng dụng trong file `angular.json`.
 
-```sh
-npx ng config cli.packageManager yarn
+Ví dụ shell sẽ chạy ở port 5200 thì chúng ta sẽ thêm như sau.
+```json
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "shell": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "projects/shell",
+      "sourceRoot": "projects/shell/src",
+      "prefix": "app",
+      "architect": {
+        "build": {},
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "port": 5200
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "shell:build:production"
+            },
+            "development": {
+              "browserTarget": "shell:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+      }
+    }
+  }
+}
 ```
+
+Sau đó, chúng ta làm tương tự cho mailbox (5300) và calendar (5400).
+
+
 
 ### Bật tính năng Module Federation
 Để bật được tính năng này chúng ta cần sử dụng custom webpack như sau:
 Bạn tạo ra các file webpack config, sau đó thay thế builder mặc định ở trong `angular.json`.
 
-Ví dụ chúng ta tạo ra 2 files `webpack.config.js` và `webpack.prod.config.js` để sử dụng cho 2 môi trường là development và production.
+Ví dụ chúng ta tạo ra 2 files `webpack.config.js` và `webpack.prod.config.js` để sử dụng cho 2 môi trường là development và production trong folder `projects/shell`.
 Sau đó chúng ta sẽ thay thế trong `angular.json`:
 - Thay `@angular-devkit/build-angular` bằng `@angular-builders/custom-webpack`.
 - Thêm config của webpack mà chúng ta vừa tạo
+- Trong mục `serve.options` chúng ta sẽ cần thêm `publicHost` để dùng cho Module Federation
 
 Dưới đây là một phần của file `angular.json`.
 
 ```json
 {
   "projects": {
-    "acme-email-client": {
+    "shell": {
       "architect": {
         "build": {
           "builder": "@angular-builders/custom-webpack:browser",
           "options": {
             "customWebpackConfig": {
-              "path": "./webpack.config.js"
+              "path": "projects/shell/webpack.config.js"
             }
           },
           "configurations": {
             "production": {
               "customWebpackConfig": {
-                "path": "./webpack.prod.config.js"
+                "path": "projects/shell/webpack.prod.config.js"
               }
             }
           }
@@ -144,19 +207,18 @@ Dưới đây là một phần của file `angular.json`.
         "serve": {
           "builder": "@angular-builders/custom-webpack:dev-server",
           "options": {
-            "browserTarget": "acme-email-client:build",
-            "customWebpackConfig": {
-              "path": "./webpack.config.js"
-            }
+            "port": 5200,
+            "publicHost": "http://localhost:5200/"
           },
           "configurations": {
             "production": {
-              "browserTarget": "acme-email-client:build:production",
-              "customWebpackConfig": {
-                "path": "./webpack.prod.config.js"
-              }
+              "browserTarget": "shell:build:production"
+            },
+            "development": {
+              "browserTarget": "shell:build:development"
             }
-          }
+          },
+          "defaultConfiguration": "development"
         },
       }
     },
@@ -171,30 +233,95 @@ Sau đó chúng ta sẽ tạo tương tự cho các project `mailbox` và `calen
 Chúng ta cần config shell như sau để bật Module Federation:
 
 ```js
-const ModuleFederationPlugin = require("webpack/lib/container/ModuleFederationPlugin");
+const { ModuleFederationPlugin } = require('webpack').container;
 
+/** @type {require('webpack').Configuration} */
 module.exports = {
   output: {
-    publicPath: "http://localhost:5200/",
-    uniqueName: "acme-email-client"
+    publicPath: 'auto', // we setup the `publicHost` in `angular.json` file
+    uniqueName: 'shell',
   },
   optimization: {
-    // Only needed to bypass a temporary bug
-    runtimeChunk: false
+    runtimeChunk: false,
+  },
+  experiments: {
+    // Allow output javascript files as module source type.
+    outputModule: true,
   },
   plugins: [
     new ModuleFederationPlugin({
-      remotes: {
-        'mailbox': "mailbox@http://localhost:5300/remoteEntry.js",
-        'calendar': "calendar@http://localhost:5400/remoteEntry.js",
+      name: 'shell',
+      library: {
+        // because Angular v14 will output ESModule
+        type: 'module',
       },
-      shared: ["@angular/core", "@angular/common", "@angular/router"]
-    })
+      remotes: {
+        mailbox: 'http://localhost:5300/remoteEntry.js',
+        calendar: 'http://localhost:5400/remoteEntry.js',
+      },
+      /**
+       * shared can be an object of type SharedConfig
+       * you can change this to select something can be shared
+       */
+       shared: ['@angular/core', '@angular/common', '@angular/router'],
+      // shared: {
+      //   "@angular/animations": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/animations/browser": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/common": {
+      //     eager: true,
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/common/http": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/core": {
+      //     eager: true,
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/platform-browser": {
+      //     eager: true,
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/platform-browser/animations": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/router": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/platform-browser-dynamic": {
+      //     eager: true,
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      // },
+    }),
   ],
 };
+
 ```
 
-Shell sẽ chạy ở port 5200, và chúng ta cần một unique name cho mỗi app. Ngoài ra, do shell sẽ trỏ đến 2 app remote, nên bạn sẽ thấy chúng ta config tương ứng cho 2 app remote luôn ở đây.
+Shell sẽ chạy ở port 5200, và chúng ta cần một unique name cho mỗi app. Ngoài ra, do shell sẽ trỏ đến 2 remotes appa, nên bạn sẽ thấy chúng ta config tương ứng cho 2 app remote luôn ở đây.
 
 Do đang dùng các micro app bằng Angular, nên chúng ta có thể share các phần code, như config phía trên, chúng ta đã share 3 packages.
 
@@ -256,7 +383,7 @@ platformBrowserDynamic().bootstrapModule(AppModule)
 ```
 **main.ts**
 ```ts
-import('./bootstrap');
+import('./bootstrap').catch(err => console.error(err));
 ```
 
 Vậy là ứng dụng đã chạy được thành công.
@@ -266,27 +393,89 @@ Nếu chúng ta muốn navigate vào 2 micro app kia thì cũng cần config tư
 
 Config dưới đây là dành cho mailbox app.
 ```js
-const ModuleFederationPlugin = require("webpack/lib/container/ModuleFederationPlugin");
+const { ModuleFederationPlugin } = require('webpack').container;
 
+/** @type {require('webpack').Configuration} */
 module.exports = {
   output: {
-    publicPath: "http://localhost:5300/",
-    uniqueName: "mailbox"
+    publicPath: 'auto', // we setup the `publicHost` in `angular.json` file
+    uniqueName: 'mailbox',
   },
   optimization: {
-    // Only needed to bypass a temporary bug
-    runtimeChunk: false
+    runtimeChunk: false,
+  },
+  experiments: {
+    // Allow output javascript files as module source type.
+    outputModule: true,
   },
   plugins: [
     new ModuleFederationPlugin({
-      name: "mailbox",
-      library: { type: "var", name: "mailbox" },
-      filename: "remoteEntry.js",
-      exposes: {
-        './MailboxModule': './projects/mailbox/src/app/mailbox.module.ts',
+      name: 'mailbox',
+      filename: 'remoteEntry.js',
+      library: {
+        // because Angular v14 will output ESModule
+        type: 'module',
       },
-      shared: ["@angular/core", "@angular/common", "@angular/router"]
-    })
+      exposes: {
+        './MailboxModule': 'projects/mailbox/src/app/mailbox/mailbox.module.ts',
+      },
+      /**
+       * shared can be an object of type SharedConfig
+       * you can change this to select something can be shared
+       */
+       shared: ['@angular/core', '@angular/common', '@angular/router'],
+      // shared: {
+      //   "@angular/animations": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/animations/browser": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/common": {
+      //     eager: true,
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/common/http": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/core": {
+      //     eager: true,
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/platform-browser": {
+      //     eager: true,
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/platform-browser/animations": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/router": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/platform-browser-dynamic": {
+      //     eager: true,
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      // },
+    }),
   ],
 };
 ```
@@ -306,25 +495,18 @@ Các micro apps lúc này hoàn toàn có thể có phần config routing riêng
 export const MAILBOX_ROUTES: Routes = [
   {
     path: '',
-    children: [
-      {
-        path: '',
-        component: MailboxHomeComponent,
-        pathMatch: 'full'
-      },
-    ]
+    component: MailboxHomeComponent,
   }
 ];
 
 @NgModule({
   declarations: [
-    MailboxHomeComponent,
+    MailboxHomeComponent
   ],
   imports: [
     CommonModule,
     RouterModule.forChild(MAILBOX_ROUTES),
-  ],
-  providers: [],
+  ]
 })
 export class MailboxModule { }
 ```
@@ -332,28 +514,89 @@ export class MailboxModule { }
 Tương tự chúng ta có thể config cho calendar app như sau:
 
 ```js
-const ModuleFederationPlugin = require("webpack/lib/container/ModuleFederationPlugin");
+const { ModuleFederationPlugin } = require('webpack').container;
 
+/** @type {require('webpack').Configuration} */
 module.exports = {
   output: {
-    publicPath: "http://localhost:5400/",
-    uniqueName: "calendar"
+    publicPath: 'auto', // we setup the `publicHost` in `angular.json` file
+    uniqueName: 'calendar',
   },
   optimization: {
-    // Only needed to bypass a temporary bug
-    runtimeChunk: false
+    runtimeChunk: false,
+  },
+  experiments: {
+    // Allow output javascript files as module source type.
+    outputModule: true,
   },
   plugins: [
     new ModuleFederationPlugin({
-      name: "calendar",
-      library: { type: "var", name: "calendar" },
-      filename: "remoteEntry.js",
-      exposes: {
-        './CalendarModule': './projects/calendar/src/app/calendar/calendar.module.ts',
+      name: 'calendar',
+      library: {
+        // because Angular v14 will output ESModule
+        type: 'module',
       },
-
-      shared: ["@angular/core", "@angular/common", "@angular/router"]
-    })
+      filename: 'remoteEntry.js',
+      exposes: {
+        './CalendarModule': 'projects/calendar/src/app/calendar/calendar.module.ts',
+      },
+      /**
+       * shared can be an object of type SharedConfig
+       * you can change this to select something can be shared
+       */
+       shared: ['@angular/core', '@angular/common', '@angular/router'],
+      // shared: {
+      //   "@angular/animations": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/animations/browser": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/common": {
+      //     eager: true,
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/common/http": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/core": {
+      //     eager: true,
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/platform-browser": {
+      //     eager: true,
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/platform-browser/animations": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/router": {
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      //   "@angular/platform-browser-dynamic": {
+      //     eager: true,
+      //     singleton: true,
+      //     strictVersion: true,
+      //     requiredVersion: "^14.2.0",
+      //   },
+      // },
+    }),
   ],
 };
 ```
@@ -362,9 +605,9 @@ module.exports = {
 
 Giờ đây bạn có thể chạy cả 3 ứng dụng:
 ```sh
-yarn start:shell
-yarn start:mailbox
-yarn start:calendar
+npm run start:shell
+npm run start:mailbox
+npm run start:calendar
 ```
 
 Sau đó truy cập vào các địa chỉ sau:

@@ -6,14 +6,14 @@ Vậy có những dạng data binding nào?
 
 ## INTERPOLATION
 
-Bây giờ hãy nhớ lại, một component trong Angular chỉ là một TypeScript (TS) class thông thường, và nó đi kèm với một decorator để găn thêm meta-data như template mà nó định nghĩa là gì. Như vậy, TS class và template này hoàn toàn không biết đến nhau, mà nó sẽ được Angular xử lý để gắn chúng lại. Câu hỏi đặt ra là làm thế nào để tôi hiển thị một dữ liệu nào đó (tên, tuổi, ngày tháng năm sinh, một string, number bất kỳ, hay bất kỳ thứ gì (object) có thể hiển thị được? Đây chính là nơi tỏa sáng của cặp đôi hoàn cảnh (mà chúng ta gọi là interpolation) `{{ expression }}`.
+Bây giờ hãy nhớ lại, một component trong Angular chỉ là một TypeScript (TS) class thông thường, và nó đi kèm với một decorator để gắn thêm meta-data như template mà nó định nghĩa là gì. Như vậy, TS class và template này hoàn toàn không biết đến nhau, mà nó sẽ được Angular xử lý để gắn chúng lại. Câu hỏi đặt ra là làm thế nào để tôi hiển thị một dữ liệu nào đó (tên, tuổi, ngày tháng năm sinh, một string, number bất kỳ, hay bất kỳ thứ gì (object) có thể hiển thị được? Đây chính là nơi tỏa sáng của cặp đôi hoàn cảnh (mà chúng ta gọi là interpolation) `{{ expression }}`.
 Nó có thể hiểu là hãy tính toán cái expression này, nếu có trả về cái gì thì phun (display) nó ra ngay vị trí chỗ dấu `{{}}` này cho tôi.
 Chỉ đơn giản thế. Giờ các bạn có thể phun data về tên tuổi của một người thành cái profile đơn giản như sau:
 
 ```typescript
-import { Component } from "@angular/core";
+import { Component } from '@angular/core';
 @Component({
-  selector: "app-hello",
+  selector: 'app-hello',
   template: `
     <h2>Hello there!</h2>
     <h3>Your name: {{ user.name }}</h3>
@@ -22,7 +22,7 @@ import { Component } from "@angular/core";
 })
 export class HelloComponent {
   user = {
-    name: "Tiep Phan",
+    name: 'Tiep Phan',
     age: 30,
   };
 }
@@ -37,14 +37,14 @@ Sau khi parse xong sẽ có một object (node) thuộc type HTMLInputElement đ
 
 ```typescript
 obj = {
-type: ‘text’,
-value: ‘something’,
-attributes: [] // thuộc type NamedNodeMap, dạng như một array
-// … các thuộc tính, method khác
-}
+  type: 'text',
+  value: 'something',
+  attributes: [], // thuộc type NamedNodeMap, dạng như một array
+  // … các thuộc tính, method khác
+};
 ```
 
-Như bạn có thể thấy attribute được để chỉ những gì các bạn đặt vào phần opening tag của một tag sẽ là attributes, còn những gì là property của object (node) sẽ được gọi là property.
+Như bạn có thể thấy, attribute được dùng để chỉ những gì các bạn đặt vào phần opening tag của một tag, còn lại là property của object (node).
 Các attributes sẽ được lưu trữ vào property attributes của node tương ứng.
 Có những attribute sẽ được map sang thành property tương ứng, ví dụ như type và value ở trên, nhưng có những attribute không được map sang ví dụ class sẽ thành className, chúng không có quan hệ 1-1 với nhau.
 Thực tế khi sử dụng Angular, chúng ta sẽ muốn ứng dụng trở nên linh động hơn (ví dụ: cùng là 1 template nhưng có thể thay đổi data để hiển thị). Lúc này chúng ta cần update các properties của DOM để làm cho nó đáp ứng chẳng hạn. Nhưng nếu cần phải dùng document.querySelector/jQuery để manipulate DOM thì Angular quá vô vị. Phải có cách gì đó hay ho hơn chứ nhỉ?
@@ -67,7 +67,7 @@ Câu trả lời chính là Event binding. Để gắn event listener vào một
 
 ```typescript
 @Component({
-  selector: "app-hello",
+  selector: 'app-hello',
   template: `
     <h2>Hello there!</h2>
     <button (click)="showInfo()">Click me!</button>
@@ -75,7 +75,7 @@ Câu trả lời chính là Event binding. Để gắn event listener vào một
 })
 export class HelloComponent {
   showInfo() {
-    alert("Inside Angular Component method");
+    alert('Inside Angular Component method');
   }
 }
 ```
@@ -119,13 +119,12 @@ Mục tiêu Day 4 sẽ là về cấu trúc `if else`
 
 ## Youtube Video
 
-https://youtu.be/WrMywdbnQfk
+[![Day 03](https://img.youtube.com/vi/WrMywdbnQfk/0.jpg)](https://youtu.be/WrMywdbnQfk)
 
 ## Author
 
 [Tiep Phan](https://github.com/tieppt)
 
-
 ## HASHTAG
 
-`#100DaysOfCodeAngular` `#100DaysOfCode #AngularVietNam100DoC_Day3`
+`#100DaysOfCodeAngular` `#100DaysOfCode` `#AngularVietNam100DoC_Day3`
